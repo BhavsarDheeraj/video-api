@@ -1,99 +1,125 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🎬 Video API - REST APIs for Video File Management
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 🚀 Overview
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This project provides a robust and secure RESTful API designed for efficient video file management. It empowers users to perform key video operations like uploading, trimming, merging, and sharing video content, all while adhering to configurable limits and ensuring API security through API key-based authentication. Built with scalability and maintainability in mind, the API leverages the power of NestJS, TypeScript, TypeORM (with SQLite for simplicity), and FFmpeg for optimized video processing.
 
-## Description
+### ✨ Key Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **🔒 Secure API Endpoints:** Robust API key-based authentication safeguards all API endpoints, ensuring only authorized access.
+- **📤 Flexible Video Upload Functionality:**
+  - Supports uploading various video formats (optimally configured for MP4).
+  - Enforces configurable maximum file size (e.g., `100MB`) and duration limits (e.g., `25 seconds`), easily adjustable via environment variables.
+- **✂️ Precise Video Trimming:** Enables users to precisely trim video clips by specifying desired start and end times in seconds.
+- **🧵 Seamless Video Merging:** Allows for the concatenation of multiple video clips (previously uploaded) into a single, cohesive video file.
+- **🔗 Time-Limited Shareable Links:** Generates unique, time-expiring shareable links for video assets, enhancing controlled content distribution.
+- **📖 Comprehensive API Documentation:** Fully documented API using Swagger UI, providing interactive exploration and testing capabilities, accessible at the `/api` endpoint after server startup.
+- **🗄️ SQLite Database Integration:** Utilizes SQLite for straightforward data persistence. The database file (`db.sqlite`) is conveniently included within the repository, simplifying project setup.
+- **🧪 Thorough Testing Suite:** Includes a comprehensive suite of unit and end-to-end tests, ensuring code reliability and API functionality. Test coverage reports are readily generated for in-depth analysis.
 
-## Project setup
+## 💡 Assumptions and Design Choices
+
+- **🔑 Authentication Strategy:** Static API key authentication was implemented for this project as per the specified requirements, prioritizing simplicity for the task. However, for production environments, consider more advanced and secure methods like JWT or OAuth 2.0.
+- **💾 Database Selection:** SQLite was chosen to facilitate ease of setup and project submission, embedding the database directly within the repository. Production deployments should leverage more scalable database systems such as PostgreSQL, MySQL, or cloud-managed database services.
+- **🎞️ Video Processing Library:** FFmpeg is employed as the video processing engine for trimming and merging operations, under the assumption that FFmpeg is readily available within the server's execution environment.
+- **📁 File Storage Mechanism:** Uploaded video files are stored locally within the `./storage` directory of the project. For production scenarios, employing cloud-based object storage solutions like AWS S3 or Google Cloud Storage is highly recommended for scalability and durability.
+- **⚙️ Configurable Limits:** Video size and duration constraints, API keys, and share link expiry durations are managed through environment variables, loaded from a `.env` file, allowing for flexible configuration without code changes.
+
+## 🛠️ Getting Started
+
+### ✅ Prerequisites
+
+- [Node.js](https://nodejs.org/) (Version >= 20 LTS Recommended, or the version used during development)
+- [npm](https://www.npmjs.com/) (or [yarn](https://yarnpkg.com/)) package manager
+- [FFmpeg](https://ffmpeg.org/) installed on your operating system (required for video processing features)
+
+### ⚙️ Setup Instructions
+
+1. **Clone the repository from GitHub:**
+
+   ```bash
+   git clone https://github.com/BhavsarDheeraj/video-api.git
+   cd video-api
+   ```
+
+2. **Install project dependencies using npm:**
+
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration (Optional - Customize API Settings):**
+
+   - Create a `.env` file in the root directory of the project if one doesn't exist.
+   - To customize API settings, define the following environment variables within the `.env` file. Example `.env` configuration:
+
+     ```
+     PORT=3000
+     API_KEY='your-secret-api-key' # Replace with your desired API key
+     MAX_SIZE_IN_MB=100          # Maximum video file size in MB
+     MAX_DURATION_IN_SECONDS=25  # Maximum video duration in seconds
+     SHARE_EXPIRY_TIME=86400     # Share link expiry time in seconds (e.g., 24 hours)
+     ```
+
+     - If a `.env` file is not present, the API will utilize default values as defined within the `ConfigModule` configuration.
+
+### ▶️ Running the API Server
+
+To start the development server, execute the following command in your terminal:
 
 ```bash
-$ npm install
+npm run start:dev
 ```
 
-## Compile and run the project
+- The API server will be accessible at `http://localhost:3000` (or the custom port specified in your `.env` file).
+- Access the interactive Swagger UI API documentation by navigating to `http://localhost:3000/api` in your web browser.
+
+### 🧪 Running the Test Suite
+
+Execute the following command to run the complete test suite, including both unit and end-to-end tests, and generate a test coverage report:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run test:cov
 ```
 
-## Run tests
+- Detailed test coverage reports will be generated and available in the `coverage/` directory after test execution.
+- For running only unit tests: `npm run test`
+- For running only end-to-end tests: `npm run test:e2e`
 
-```bash
-# unit tests
-$ npm run test
+### 🔑 API Key Authentication
 
-# e2e tests
-$ npm run test:e2e
+- API key-based authentication secures all API endpoints, with the exception of the `/videos/shared/{token}` endpoint, which is designed for public access via shareable links.
+- To authenticate API requests, include the `x-api-key` header in your HTTP requests.
+- Example using `curl` to upload a video (replace placeholders with your actual API key and video file path):
 
-# test coverage
-$ npm run test:cov
-```
+  ```bash
+  curl -X POST http://localhost:3000/videos/upload \
+       -H "Content-Type: multipart/form-data" \
+       -H "x-api-key: your-secret-api-key" \
+       -F "file=@/path/to/your/video.mp4"
+  ```
 
-## Deployment
+## 🗂️ API Endpoints
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+| Endpoint                     | Method | Request Body                   | Response Codes                                                | Description                                                                 |
+| :--------------------------- | :----- | :----------------------------- | :------------------------------------------------------------ | :-------------------------------------------------------------------------- |
+| `POST /videos/upload`        | POST   | `multipart/form-data` (`file`) | 201 Created, 400 Bad Request, 401 Unauthorized                | Upload a new video file to the server.                                      |
+| `POST /videos/trim`          | POST   | `TrimVideoDto` (JSON)          | 201 Created, 400 Bad Request, 404 Not Found, 401 Unauthorized | Trim an existing video clip by specifying start and end times.              |
+| `POST /videos/merge`         | POST   | `MergeVideosDto` (JSON)        | 201 Created, 400 Bad Request, 404 Not Found, 401 Unauthorized | Merge multiple previously uploaded video clips into a single video.         |
+| `POST /videos/share`         | POST   | `ShareVideoDto` (JSON)         | 201 Created, 400 Bad Request, 404 Not Found, 401 Unauthorized | Generate a time-expiring shareable link for a specific video.               |
+| `GET /videos/shared/{token}` | GET    | None                           | 200 OK, 404 Not Found, 401 Unauthorized                       | Retrieve and stream a shared video using a valid and unexpired share token. |
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 📚 Documentation and Citations
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+- **NestJS Official Documentation:** [https://docs.nestjs.com/](https://docs.nestjs.com/) - _Comprehensive documentation for the NestJS framework._
+- **TypeORM Official Documentation:** [https://typeorm.io/](https://typeorm.io/) - _Documentation for the TypeORM Object-Relational Mapper._
+- **Fluent-FFmpeg npm Package:** [https://www.npmjs.com/package/fluent-ffmpeg](https://www.npmjs.com/package/fluent-ffmpeg) - _Node.js library for fluent FFmpeg command-line interface._
+- **class-validator and class-transformer (GitHub Repository):** [https://github.com/typestack/class-validator](https://github.com/typestack/class-validator) - _Validation and transformation library for TypeScript classes, used for DTO validation._
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 📜 Commit History
 
-## Resources
+- The project's development history is meticulously maintained with granular, well-commented commits, reflecting a step-by-step approach to feature implementation and code refactoring, ensuring clarity and traceability.
 
-Check out a few resources that may come in handy when working with NestJS:
+## 🏛️ Architecture Diagram
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+![Architecture Diagram](assets/architecture.png)
