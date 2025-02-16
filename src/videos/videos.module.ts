@@ -10,9 +10,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Video } from './entities/video.entity';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 import { ShareLinkMiddleware } from '../middleware/share-link.middleware';
+import { UtilsModule } from '../utils/utils.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Video])],
+  imports: [TypeOrmModule.forFeature([Video]), UtilsModule],
   controllers: [VideosController],
   providers: [VideosService],
 })

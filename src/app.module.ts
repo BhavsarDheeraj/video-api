@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { VideosModule } from './videos/videos.module';
+import { UtilsModule } from './utils/utils.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { VideosModule } from './videos/videos.module';
       synchronize: true,
     }),
     VideosModule,
+    UtilsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

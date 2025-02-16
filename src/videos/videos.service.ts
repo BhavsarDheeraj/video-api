@@ -6,13 +6,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Video } from './entities/video.entity';
-import * as ffmpeg from 'fluent-ffmpeg';
 import { extname, join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 import { createReadStream } from 'fs';
+import { FfmpegUtil } from '../utils/ffmpeg.util';
 
 @Injectable()
 export class VideosService {
@@ -20,6 +20,7 @@ export class VideosService {
     @InjectRepository(Video)
     private videoRepository: Repository<Video>,
     private readonly configService: ConfigService,
+    private readonly ffmpegUtil: FfmpegUtil,
   ) {}
 
   generateFilename(originalname: string): string {
@@ -33,25 +34,15 @@ export class VideosService {
   async create(fileData: Partial<Video>): Promise<Video> {
     const newVideo = this.videoRepository.create(fileData);
     const savedVideo = await this.videoRepository.save(newVideo);
-    return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(savedVideo.path, (err, metadata) => {
-        if (err) {
-          console.error('Error probing video:', err);
-          resolve(savedVideo);
-          return;
-        }
-        savedVideo.duration = Math.ceil(metadata.format.duration * 1000);
-        this.videoRepository
-          .save(savedVideo)
-          .then((updatedVideo) => {
-            resolve(updatedVideo);
-          })
-          .catch((updateError) => {
-            console.error('Error updating video duration:', updateError);
-            resolve(savedVideo);
-          });
-      });
-    });
+
+    try {
+      const duration = await this.ffmpegUtil.getVideoDuration(savedVideo.path); // use utility
+      savedVideo.duration = duration;
+      return await this.videoRepository.save(savedVideo);
+    } catch (error) {
+      console.error('Error getting video duration', error);
+      return savedVideo;
+    }
   }
 
   async trim(id: string, startTime: number, endTime: number): Promise<Video> {
@@ -67,29 +58,26 @@ export class VideosService {
     const outputFile = `./storage/${outputFilename}`;
     const duration = endTime - startTime;
 
-    return new Promise((resolve, reject) => {
-      ffmpeg(inputFile)
-        .setStartTime(startTime)
-        .setDuration(duration)
-        .output(outputFile)
-        .on('end', async () => {
-          const trimmedVideo = await this.create({
-            filename: outputFilename,
-            originalFilename: video.originalFilename,
-            path: outputFile,
-            size: 0,
-            duration: 0,
-          });
-          resolve(trimmedVideo);
-        })
-        .on('error', (err) => {
-          console.error('Error trimming video:', err);
-          reject(err);
-        })
-        .run();
-    });
+    try {
+      await this.ffmpegUtil.trimVideo(
+        inputFile,
+        outputFile,
+        startTime,
+        duration,
+      );
+      const trimmedVideo = await this.create({
+        filename: outputFilename,
+        originalFilename: video.originalFilename,
+        path: outputFile,
+        size: 0,
+        duration: 0,
+      });
+      return trimmedVideo;
+    } catch (error) {
+      console.error('trimVideo error', error);
+      throw error;
+    }
   }
-
   async merge(videoIds: string[]): Promise<Video> {
     if (!videoIds || videoIds.length === 0) {
       throw new BadRequestException('No video IDs provided for merging');
@@ -115,30 +103,22 @@ export class VideosService {
     const outputFilename = this.generateFilename('merged_video.mp4');
     const outputFile = `./storage/${outputFilename}`;
 
-    return new Promise((resolve, reject) => {
-      const merger = ffmpeg();
+    try {
+      await this.ffmpegUtil.mergeVideos(videoPaths, outputFile);
 
-      videoPaths.forEach((path) => {
-        merger.addInput(path);
+      const mergedVideo = await this.create({
+        filename: outputFilename,
+        originalFilename: 'merged_video.mp4',
+        path: outputFile,
+        size: 0,
+        duration: 0,
       });
 
-      merger
-        .mergeToFile(outputFile)
-        .on('end', async () => {
-          const mergedVideo = await this.create({
-            filename: outputFilename,
-            originalFilename: 'merged_video.mp4',
-            path: outputFile,
-            size: 0,
-            duration: 0,
-          });
-          resolve(mergedVideo);
-        })
-        .on('error', (err) => {
-          console.error('Error merging videos:', err);
-          reject(err);
-        });
-    });
+      return mergedVideo;
+    } catch (error) {
+      console.error('mergeVideos error', error);
+      throw error;
+    }
   }
 
   async generateShareLink(videoId: string): Promise<Video> {
