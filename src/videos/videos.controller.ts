@@ -22,12 +22,19 @@ import { ValidationPipe } from '@nestjs/common';
 import { FileValidationPipe } from './pipes/file-validation.pipe';
 import { NotFoundException } from '@nestjs/common';
 import { ShareVideoDto } from './dto/share-video.dto';
+import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
+import { ApiVideoUpload } from './decorators/api-video-upload.decorator';
+import { ApiVideoTrim } from './decorators/api-video-trim.decorator';
+import { ApiVideoMerge } from './decorators/api-video-merge.decorator';
+import { ApiVideoShare } from './decorators/api-video-share.decorator';
 
+@ApiTags('videos')
 @Controller('videos')
 export class VideosController {
   constructor(private readonly videosService: VideosService) {}
 
   @Post('upload')
+  @ApiVideoUpload()
   @UseInterceptors(VideoUploadInterceptor)
   @UsePipes(FileValidationPipe)
   async uploadVideo(
@@ -54,6 +61,7 @@ export class VideosController {
   }
 
   @Post('trim')
+  @ApiVideoTrim()
   @UsePipes(new ValidationPipe({ transform: true }))
   async trimVideo(@Body() trimVideoDto: TrimVideoDto, @Res() res: Response) {
     try {
@@ -82,6 +90,7 @@ export class VideosController {
   }
 
   @Post('merge')
+  @ApiVideoMerge()
   @UsePipes(new ValidationPipe({ transform: true }))
   async mergeVideos(
     @Body() mergeVideosDto: MergeVideosDto,
@@ -106,6 +115,7 @@ export class VideosController {
   }
 
   @Post('share')
+  @ApiVideoShare()
   @UsePipes(new ValidationPipe({ transform: true }))
   async shareVideo(
     @Body() shareVideoDto: ShareVideoDto,
@@ -129,6 +139,7 @@ export class VideosController {
     }
   }
 
+  @ApiExcludeEndpoint()
   @Get('shared/:token')
   async getSharedVideo(
     @Param('token') token: string,
