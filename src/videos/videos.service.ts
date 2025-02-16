@@ -2,18 +2,24 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  StreamableFile,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Video } from './entities/video.entity';
 import * as ffmpeg from 'fluent-ffmpeg';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
+import { createReadStream } from 'fs';
 
 @Injectable()
 export class VideosService {
   constructor(
     @InjectRepository(Video)
     private videoRepository: Repository<Video>,
+    private readonly configService: ConfigService,
   ) {}
 
   generateFilename(originalname: string): string {
@@ -133,5 +139,50 @@ export class VideosService {
           reject(err);
         });
     });
+  }
+
+  async generateShareLink(videoId: string): Promise<Video> {
+    const video = await this.videoRepository.findOneBy({ id: videoId });
+    if (!video) {
+      throw new NotFoundException(`Video with ID ${videoId} not found`);
+    }
+
+    const token = uuidv4();
+    const expiryTime =
+      Date.now() +
+      parseInt(this.configService.get('SHARE_EXPIRY_TIME', '3600')) * 1000;
+
+    video.shareLink = token;
+    video.shareLinkExpiry = expiryTime;
+
+    return await this.videoRepository.save(video);
+  }
+
+  async streamVideo(videoId: string): Promise<StreamableFile> {
+    const video = await this.videoRepository.findOneBy({ id: videoId });
+    if (!video) {
+      throw new NotFoundException('Video not found');
+    }
+
+    const file = createReadStream(join(process.cwd(), video.path));
+    return new StreamableFile(file);
+  }
+
+  async getVideoByShareLinkAndStream(
+    token: string,
+  ): Promise<{ video: Video; stream: StreamableFile }> {
+    const video = await this.videoRepository.findOne({
+      where: { shareLink: token },
+    });
+    if (!video) {
+      throw new NotFoundException('Invalid share link');
+    }
+
+    if (video.shareLinkExpiry && video.shareLinkExpiry < Date.now()) {
+      throw new UnauthorizedException('Share link has expired');
+    }
+
+    const fileStream = createReadStream(join(process.cwd(), video.path));
+    return { video: video, stream: new StreamableFile(fileStream) };
   }
 }

@@ -7,15 +7,21 @@ import {
   Body,
   BadRequestException,
   UsePipes,
+  Get,
+  Param,
+  StreamableFile,
+  UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { VideosService } from './videos.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { VideoUploadInterceptor } from './interceptors/file-upload.interceptor';
 import { TrimVideoDto } from './dto/trim-video.dto';
 import { MergeVideosDto } from './dto/merge-videos.dto';
 import { ValidationPipe } from '@nestjs/common';
 import { FileValidationPipe } from './pipes/file-validation.pipe';
 import { NotFoundException } from '@nestjs/common';
+import { ShareVideoDto } from './dto/share-video.dto';
 
 @Controller('videos')
 export class VideosController {
@@ -96,6 +102,55 @@ export class VideosController {
         return res.status(400).json({ message: error.message });
       }
       return res.status(500).json({ message: 'Failed to merge videos' });
+    }
+  }
+
+  @Post('share')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async shareVideo(
+    @Body() shareVideoDto: ShareVideoDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    try {
+      const { id } = shareVideoDto;
+      const video = await this.videosService.generateShareLink(id);
+      return res.status(201).json({
+        message: 'Share link generated successfully',
+        link: `${req.protocol}://${req.get('host')}/videos/shared/${video.shareLink}`,
+        expiry: video.shareLinkExpiry,
+      });
+    } catch (error) {
+      console.error('shareVideo error', error);
+      if (error instanceof NotFoundException) {
+        return res.status(404).json({ message: error.message });
+      }
+      return res.status(500).json({ message: 'Failed to generate share link' });
+    }
+  }
+
+  @Get('shared/:token')
+  async getSharedVideo(
+    @Param('token') token: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    try {
+      const { video, stream } =
+        await this.videosService.getVideoByShareLinkAndStream(token);
+
+      res.set({
+        'Content-Type': 'video/mp4',
+        'Content-Disposition': `inline; filename="${video.originalFilename}"`,
+      });
+
+      return stream;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      } else if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new NotFoundException('Video not found or share link expired');
     }
   }
 }
