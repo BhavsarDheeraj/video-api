@@ -36,7 +36,7 @@ export class VideosService {
     const savedVideo = await this.videoRepository.save(newVideo);
 
     try {
-      const duration = await this.ffmpegUtil.getVideoDuration(savedVideo.path); // use utility
+      const duration = await this.ffmpegUtil.getVideoDuration(savedVideo.path);
       savedVideo.duration = duration;
       return await this.videoRepository.save(savedVideo);
     } catch (error) {

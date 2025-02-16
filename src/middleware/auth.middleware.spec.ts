@@ -8,8 +8,8 @@ describe('AuthMiddleware', () => {
 
   beforeEach(() => {
     mockConfigService = {
-      get: jest.fn(), // Mock ConfigService.get method
-    } as any; // Type assertion to ConfigService
+      get: jest.fn(),
+    } as any;
 
     authMiddleware = new AuthMiddleware(mockConfigService);
   });
@@ -20,60 +20,60 @@ describe('AuthMiddleware', () => {
 
   it('should call next() if API key is valid', () => {
     const mockApiKey = 'test-api-key';
-    (mockConfigService.get as jest.Mock).mockReturnValue(mockApiKey); // Mock ConfigService.get to return test API key
+    (mockConfigService.get as jest.Mock).mockReturnValue(mockApiKey);
 
     const mockRequest: any = {
       headers: { 'x-api-key': mockApiKey },
     };
     const mockResponse: any = {};
-    const mockNext = jest.fn(); // Mock NextFunction
+    const mockNext = jest.fn();
 
     authMiddleware.use(mockRequest, mockResponse, mockNext);
 
-    expect(mockNext).toHaveBeenCalled(); // Assert that next() was called
+    expect(mockNext).toHaveBeenCalled();
   });
 
   it('should throw UnauthorizedException if API key is missing', () => {
-    (mockConfigService.get as jest.Mock).mockReturnValue('test-api-key'); // Mock ConfigService.get (API key exists in config)
+    (mockConfigService.get as jest.Mock).mockReturnValue('test-api-key');
 
     const mockRequest: any = {
-      headers: {}, // Missing x-api-key header
+      headers: {},
     };
     const mockResponse: any = {};
     const mockNext = jest.fn();
 
     expect(() => {
       authMiddleware.use(mockRequest, mockResponse, mockNext);
-    }).toThrowError(UnauthorizedException); // Assert that it throws UnauthorizedException
+    }).toThrowError(UnauthorizedException);
 
     try {
       authMiddleware.use(mockRequest, mockResponse, mockNext);
     } catch (error) {
-      expect(error.message).toEqual('Invalid API Key'); // Assert correct error message
+      expect(error.message).toEqual('Invalid API Key');
     }
 
-    expect(mockNext).not.toHaveBeenCalled(); // Assert that next() was NOT called
+    expect(mockNext).not.toHaveBeenCalled();
   });
 
   it('should throw UnauthorizedException if API key is invalid', () => {
     const mockApiKey = 'test-api-key';
-    (mockConfigService.get as jest.Mock).mockReturnValue(mockApiKey); // Mock ConfigService.get (expected API key)
+    (mockConfigService.get as jest.Mock).mockReturnValue(mockApiKey);
 
     const mockRequest: any = {
-      headers: { 'x-api-key': 'wrong-api-key' }, // Incorrect API key provided
+      headers: { 'x-api-key': 'wrong-api-key' },
     };
     const mockResponse: any = {};
     const mockNext = jest.fn();
 
     expect(() => {
       authMiddleware.use(mockRequest, mockResponse, mockNext);
-    }).toThrowError(UnauthorizedException); // Assert throws UnauthorizedException
+    }).toThrowError(UnauthorizedException);
 
     try {
       authMiddleware.use(mockRequest, mockResponse, mockNext);
     } catch (error) {
-      expect(error.message).toEqual('Invalid API Key'); // Assert correct error message
+      expect(error.message).toEqual('Invalid API Key');
     }
-    expect(mockNext).not.toHaveBeenCalled(); // Assert next() was NOT called
+    expect(mockNext).not.toHaveBeenCalled();
   });
 });
