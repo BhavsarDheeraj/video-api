@@ -1,16 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AppModule } from './app.module';
+import { AppModule } from '../src/app.module';
+import { LoggingMiddleware } from '../src/middleware/logging.middleware';
 
-describe('AppModule', () => {
-  let module: TestingModule;
+describe('AppModule Middleware Configuration', () => {
+  let appModule: AppModule;
+  let fakeConsumer: any;
+  let forRoutesSpy: jest.Mock;
 
-  beforeEach(async () => {
-    module = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
+  beforeEach(() => {
+    appModule = new AppModule();
+    forRoutesSpy = jest.fn();
+    fakeConsumer = {
+      apply: jest.fn(() => ({
+        forRoutes: forRoutesSpy,
+      })),
+    };
   });
 
-  it('should compile the AppModule', () => {
-    expect(module).toBeDefined();
+  it('should apply LoggingMiddleware for all routes', () => {
+    appModule.configure(fakeConsumer);
+    expect(fakeConsumer.apply).toHaveBeenCalledWith(LoggingMiddleware);
+    expect(forRoutesSpy).toHaveBeenCalledWith('*');
   });
 });
