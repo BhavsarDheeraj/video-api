@@ -1,5 +1,4 @@
 import { VideosService } from '../videos.service';
-import { ConfigService } from '@nestjs/config';
 import { Observable, of } from 'rxjs';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -18,21 +17,14 @@ jest.mock('@nestjs/platform-express', () => ({
 describe('VideoUploadInterceptor', () => {
   let interceptor: VideoUploadInterceptor;
   let videosService: Partial<VideosService>;
-  let configService: Partial<ConfigService>;
   let executionContext: ExecutionContext;
   let callHandler: CallHandler;
 
   beforeEach(() => {
     videosService = {
-      generateFilename: jest.fn(
-        (originalName: string) => 'generatedFilename.mp4',
-      ),
+      generateFilename: jest.fn(() => 'generatedFilename.mp4'),
     };
-    configService = {} as ConfigService;
-    interceptor = new VideoUploadInterceptor(
-      videosService as VideosService,
-      configService as ConfigService,
-    );
+    interceptor = new VideoUploadInterceptor(videosService as VideosService);
 
     executionContext = {
       switchToHttp: () => ({
